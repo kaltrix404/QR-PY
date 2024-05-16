@@ -1,16 +1,12 @@
 import numpy as np
-from error_correction import make_format_ecc
+# from error_correction import make_format_ecc
 from math import floor
 import utils
-
-
-# print(utils.alternating_arr(10))
-# exit()
+from data_encoder import DataEncoder,make_format_ecc 
 
 
 class Error(Exception):
-    # def __init__(self,code):
-    #     self.code
+
     def mask_key_error(self,mask_no):
         print("NO masks found for mask no: %s"%mask_no)
         print("EXITING.")
@@ -18,6 +14,10 @@ class Error(Exception):
     
 
 def mask_it(r,c,mask_no,bit):
+    """
+    Used for masking data. One bit at a time . A loop must be used to iterate ,
+    the function doesn't iterate on its own.
+    """
     flip = lambda x : 0 if x else 1
     MASKS = { 0 : bit if (r+c)%2 else flip(bit),
               1 : bit if r%2 else flip(bit),
@@ -33,28 +33,34 @@ def mask_it(r,c,mask_no,bit):
         raise Error().mask_key_error(mask_no)
     
 
+def get_version_size(v):
+    s = (4*v) + 17
+    return (s,s)  # width,height
 
 class QR:
 
-    VERSION_SIZES = {"v1":(21,21),
-                      "v2":(25,25),
-                      "v3":(29,29)
-
-    }
-
-    version_capabilities ={}
 
     def __init__(self,version=None,ecl=None,mask=None):
         self.version = version
-        self.data = None
-        self.mask = None
-        self.ecl = None
-        
-        self.size = self.VERSION_SIZES[version]
-        (self.w,self.h) = self.size
+        self.mask = mask
+        self.ecl = ecl
+        self.data = None #raw binary data
+        self.mode = None
+        self.size = None #get_version_size(version) if version else None
+        self.qr = None
+        # (self.w,self.h) = self.size
 
-        self.template = self.create_template()
-        self.qr = np.zeros(self.size)
+        # self.template = self.create_template()
+        # self.qr = np.zeros(self.size)
+        
+
+        # self.size = get_version_size(version)
+        # (self.w,self.h) = self.size
+
+        # self.template = self.create_template()
+        # self.qr = np.zeros(self.size)
+    
+
 
 
 
@@ -100,7 +106,6 @@ class QR:
     def place_mask(self):
         """
         Apply the specified mask to QR code.
-
         """
         mask_type = self.mask
         for r in range(self.w):
@@ -174,75 +179,6 @@ class QR:
         self.qr[8,7]  = ldat[-1]  
 
 
-
-    # def place_data(self):
-    #     """
-    #     Place data in QR code in snake/zigzag pattern.
-    #     """
-  
-    #     go_left = lambda r,c: (r,c-1)
-    #     go_upright = lambda r,c :(r-1, c+1)
-    #     go_downright = lambda r,c :(r+1,c+1)
-    #     shift_col_left = lambda r,c: (r,c-1)
-    #     check = lambda r,c : self.template[r,c]
-
-    #     timing_pos = 6
-    #     dat=0
-    #     r,c = self.w-1,self.h-1
-
-    #     x,y = int((self.w-1)/2),self.h-1
-        
-    #     for col in range(x):
-    #         # print("colllllllllll",col)
-    #         if c==timing_pos:
-    #             r,c=shift_col_left(r,c)
-
-    
-    #         for row in range(y):
-
-    #             if col%2==0:       
-    #                 free = check(r,c)
-    #                 if free:
-    #                     self.qr[r,c]=self.data[dat]
-    #                     dat+=1
-
-    #                 r,c=go_left(r,c)
-                    
-
-    #                 if check(r,c):
-    #                     self.qr[r,c]=self.data[dat]
-    #                     dat+=1
-
-    #                 r,c=go_upright(r,c)
-    #                 print("uppppp",r,c)
-
-    #             else :
-                    
-    #                 free = check(r,c)
-    #                 if free:
-    #                     self.qr[r,c] = self.data[dat]
-    #                     dat+=1
-
-    #                 r,c=go_left(r,c)
-    #                 if check(r,c):
-    #                     self.qr[r,c] = self.data[dat]
-    #                     dat+=1
-
-    #                 r,c=go_downright(r,c)
-
-    #                 print("downnnnnn",r,c)
-
-    #         print(r,c)
-     
-    #         if check(r,c):
-    #             self.qr[r,c ]= self.data[dat]
-    #             dat+=1
-    #         r,c=go_left(r,c)
-    #         if check(r,c):
-    #             self.qr[r,c] = self.data[dat]
-    #             dat+=1
-    #         r,c=go_left(r,c)
-        
     def place_data(self):
         """
         Place data in QR code in snake/zigzag pattern.
@@ -317,36 +253,43 @@ class QR:
                     dat+=1
                 r,c=go_left(r,c)
 
-
-            # if check(r,c):
-            #     qr[r,c]= data[dat]
-            #     dat+=1
-            # r,c=go_left(r,c)
-            # if check(r,c):
-            #     qr[r,c]= data[dat]
-            #     dat+=1
-            # r,c=go_left(r,c)
-        
         self.qr = qr
 
 
     ###################################
 
 
-    def create_qr(self,data):
+    def create_qr(self,inp_data):
         """
         Create the QR code.
         """
 
-        data = "0010000001011011000010110111100011010001011100101101110001001101010000110100000011101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111110000011000010111010000100110000001001101100101101001010000011000100110000110"
-        self.data=data+"0"*20
-  
-        self.mask = 1
-        self.ecl = 1
+        #analyze the input and determine params for qr.
+        encoder = DataEncoder(mode=self.mode,version=self.version,ecl=self.ecl)
+        (enc_data_params,enc_data)  = encoder.encode_data(inp_data)
 
+        #update attributes
+        self.version = enc_data_params['version']
+        self.mode = enc_data_params['mode']
+        self.ecl = enc_data_params['ecl']
+        self.data = enc_data
+        self.size = get_version_size(self.version)
+        (self.w,self.h) = self.size
+
+        #create template and initialize an empty qr 
+        self.template = self.create_template()
+        self.qr = np.zeros(self.size)
+        
+
+        # data = "0010000001011011000010110111100011010001011100101101110001001101010000110100000011101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111110000011000010111010000100110000001001101100101101001010000011000100110000110"
+        # data = "0010000001011001110111011000010001100000101111000101100111111011100110100100000011101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000100000101110111010100001110111111011100101111101000001101110011101011100001010011"
+        self.data=self.data+"0"*7 # #TODO locate & figure out problem causing less data 
+
+        
+        self.mask = 1 #for now
+        # create the QR
         self.place_data()
         self.place_mask()
-        
         self.place_finders()
         self.place_timings()
         self.place_alignments()
@@ -358,6 +301,23 @@ class QR:
     
 
 
+    #currently using matplotlib for testing out 
+    def show(self):
+        levels=[0,1]
+        qrm = self.qr
+
+        import matplotlib.pyplot as plt
+        from matplotlib.colors import ListedColormap
+
+        my_cmap = ListedColormap(["white","black"],"mcmap")
+        # my_cmap = ListedColormap(["black","white"],"mcmap")
+        plt.matshow(qrm,cmap=my_cmap)
+        # plt.matshow(qrm)
+        plt.show()
+
+    
+
+    
 
 
 
@@ -365,23 +325,64 @@ class QR:
 
 
 
-my_qr = QR("v2")
 
-qrm = my_qr.create_qr("HELLO WORLD")
-print(qrm)
+if __name__ == "__main__":
+        
+    my_qr = QR(2)
 
-# flip = lambda x : 0 if x else 1
-# qrm = [[flip(i) for i in j] for j in qrm]
+    qrm = my_qr.create_qr("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:")
 
-levels=[0,1]
+                        
+    print(qrm)
 
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
+    my_qr.show()
 
-my_cmap = ListedColormap(["white","black"],"mcmap")
-# my_cmap = ListedColormap(["black","white"],"mcmap")
-plt.matshow(qrm,cmap=my_cmap)
-# plt.matshow(qrm)
-plt.show()
+
+
+
+    ################
+    # How i want to implement usage:
+
+    # 1
+    #create instance of QR
+    #adv .:  can give it mode,ecl,ver
+    # qr = QR()
+
+    # 2
+    #create a qr code
+    # qr.create_qr("input data") 
+     
+        # automatically determines params that are not given by user (ecl,mode,version)
+        # creates a qr code 
+        # NOTES / INFO :
+                # calls DataEncoder 
+                # outputs qr data /alt./ show it like the ex. below  3(qr saved in self.qr)  
+                    
+    # 3
+    #show the qr / save it
+    # qr.show()
+
+
+    #NOTES / INFO
+
+
+
+
+    #TODO
+    # version to size, v/
+    # total cwords,ecc syms
+    # alignment  pattern
+    #mask rating and choosing
+    # version info module placement for version>7
+
+
+
+
+
+
+
+    #############
+
+
 
 
