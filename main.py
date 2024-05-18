@@ -1,8 +1,9 @@
 import numpy as np
-# from error_correction import make_format_ecc
 from math import floor
+
 import utils
 from data_encoder import DataEncoder,make_format_ecc 
+import constants 
 
 
 class Error(Exception):
@@ -31,11 +32,56 @@ def mask_it(r,c,mask_no,bit):
         return MASKS[mask_no]
     except KeyError:
         raise Error().mask_key_error(mask_no)
-    
 
-def get_version_size(v):
-    s = (4*v) + 17
-    return (s,s)  # width,height
+ALIGNMENT_PATTERN_POS =  [(),(),
+        (6,18),
+        (6,22),
+        (6,26),
+        (6,30),
+        (6,34),
+        (6,22,38),
+        (6,24,42),
+        (6,26,46),
+        (6,28,50),
+        (6,30,54),
+        (6,32,58),
+        (6,34,62),
+        (6,26,46,66),
+        (6,26,48,70),
+        (6,26,50,74),
+        (6,30,54,78),
+        (6,30,56,82),
+        (6,30,58,86),
+        (6,34,62,90),
+        (6,28,50,72,94),
+        (6,26,50,74,98),
+        (6,30,54,78,102),
+        (6,28,54,80,106),
+        (6,32,58,84,110),
+        (6,30,58,86,114),
+        (6,34,62,90,118),
+        (6,26,50,74,98,122),
+        (6,30,54,78,102,126),
+        (6,26,52,78,104,130),
+        (6,30,56,82,108,134),
+        (6,34,60,86,112,138),
+        (6,30,58,86,114,142),
+        (6,34,62,90,118,146),
+        (6,30,54,78,102,126,150),
+        (6,24,50,76,102,128,154),
+        (6,28,54,80,106,132,158),
+        (6,32,58,84,110,136,162),
+        (6,26,54,82,110,138,166),
+        (6,30,58,86,114,142,170)]
+
+ALIGNMENT_PATTERN =  [[1,1,1,1,1],
+                      [1,0,0,0,1],
+                      [1,0,1,0,1],
+                      [1,0,0,0,1],
+                      [1,1,1,1,1]]
+
+
+
 
 class QR:
 
@@ -48,18 +94,7 @@ class QR:
         self.mode = None
         self.size = None #get_version_size(version) if version else None
         self.qr = None
-        # (self.w,self.h) = self.size
 
-        # self.template = self.create_template()
-        # self.qr = np.zeros(self.size)
-        
-
-        # self.size = get_version_size(version)
-        # (self.w,self.h) = self.size
-
-        # self.template = self.create_template()
-        # self.qr = np.zeros(self.size)
-    
 
 
 
@@ -96,9 +131,15 @@ class QR:
             qr[8:-8,6] = timing_arr #vertical
             qr[6,8:-8] = timing_arr #horizontal
 
-            #alignment pattern
-            alx,aly=16,16
-            qr[alx:alx+5,aly:aly+5] = np.zeros([5,5])
+
+            qr = self.place_alignments(qr,np.zeros((5,5)))
+
+
+            if self.version  >= 7:
+                qr = self.place_version_info(self.version,is_template=True,template=qr)
+
+
+
 
             return qr
 
@@ -143,20 +184,60 @@ class QR:
 
 
     #TODO dynamically place alignment patterns
-    def place_alignments(self):
+    def place_alignments(self,qr,pattern):
         """
-        Place alignment patterns in the QR code
+        Place specified alignment patterns in the QR code / Template .
         """
-        alignment_pattern = [[1,1,1,1,1],
-                             [1,0,0,0,1],
-                             [1,0,1,0,1],
-                             [1,0,0,0,1],
-                             [1,1,1,1,1]]
-        x,y = 16,16
-        self.qr[x:x+5,y:y+5] = alignment_pattern
+        if not self.version == 1:
+            from itertools import product
+            # Generate combinations
+            positions = list(product(ALIGNMENT_PATTERN_POS[self.version], repeat=2))
+
+            for r,c in positions:
+                # avoid finder patterns
+                if (r,c) == (6,6): continue
+                if r>(self.w-8) and c==6: continue
+                if r==6 and c>(self.h-8): continue
+                
+                #place template/pattern in their respective positions
+                qr[r-2:r+3,c-2:c+3] = pattern
+        
+        return qr
 
 
-    def place_format_info(self):
+    def place_version_info(self,version,is_template=False,template=None):
+        """
+        Place version info in the qr
+        """
+        if is_template:
+            vstring = np.zeros((6,3))
+            template[:6,-11:-8] = vstring    #top right      
+            template[-11:-8,:6] = vstring.T  #bottom left
+            return template
+
+            
+
+        v_index = version - 7
+        version_string = constants.VERSION_INFO_STRINGS[v_index][::-1] # reverse FTM until changing constant
+        vstring = [version_string[i:i+3] for i in range(0,len(version_string),3)]
+
+        # print(vstring)
+        vstring = np.array(vstring)
+        # print(vstring)
+        # print(vstring.shape)
+#
+        self.qr[:6,-11:-8] = vstring    #top right
+        self.qr[-11:-8,:6] = vstring.T  #bottom left
+
+        # print(vstring.T)
+
+        # return qr
+
+
+
+
+
+    def place_format_info(self): 
         """
         Place format info in the QR code.
         """
@@ -272,10 +353,11 @@ class QR:
         self.version = enc_data_params['version']
         self.mode = enc_data_params['mode']
         self.ecl = enc_data_params['ecl']
-        self.data = enc_data
-        self.size = get_version_size(self.version)
+        self.data = enc_data+"0"*1000000
+        self.size = utils.get_version_size(self.version)
         (self.w,self.h) = self.size
 
+        print("QR ATTRIBUTES",self.__getattribute__("version"))
         #create template and initialize an empty qr 
         self.template = self.create_template()
         self.qr = np.zeros(self.size)
@@ -292,7 +374,8 @@ class QR:
         self.place_mask()
         self.place_finders()
         self.place_timings()
-        self.place_alignments()
+        self.qr = self.place_alignments(self.qr,ALIGNMENT_PATTERN)
+        self.place_version_info(self.version)
         self.place_format_info()
 
 
@@ -304,15 +387,43 @@ class QR:
     #currently using matplotlib for testing out 
     def show(self):
         levels=[0,1]
+        qrm = self.template
         qrm = self.qr
 
         import matplotlib.pyplot as plt
         from matplotlib.colors import ListedColormap
+        
+        # plt.title("Version:%i"%self.version)
 
         my_cmap = ListedColormap(["white","black"],"mcmap")
         # my_cmap = ListedColormap(["black","white"],"mcmap")
         plt.matshow(qrm,cmap=my_cmap)
         # plt.matshow(qrm)
+        plt.show()
+
+
+    def _adv_show(self):
+        levels=[0,1]
+        temp = self.template
+        qrm = self.qr
+
+        import matplotlib.pyplot as plt
+        from matplotlib.colors import ListedColormap
+        
+        # plt.title("Version:%i"%self.version)
+        fig,axis = plt.subplots(1,2)
+
+        # p.mat
+
+        my_cmap = ListedColormap(["white","black"],"mcmap")
+  
+        axis[0].matshow(temp)
+        axis[0].set_title("Template") 
+        
+        # For Cosine Function 
+        axis[1].matshow(qrm,cmap=my_cmap) 
+        axis[1].set_title("QR CODE v%i"%self.version) 
+
         plt.show()
 
     
@@ -328,14 +439,16 @@ class QR:
 
 if __name__ == "__main__":
         
-    my_qr = QR(2)
+    my_qr = QR()
 
-    qrm = my_qr.create_qr("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:")
+    qrm = my_qr.create_qr("".join(["0123456789" for i in range(5)]))
 
                         
     print(qrm)
 
+    # my_qr._adv_show()
     my_qr.show()
+    # print(my_qr)
 
 
 

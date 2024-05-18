@@ -20,3 +20,11 @@ def format2(i,type,length,pad="left"):
     res = pad_bits + val if pad=="left" else val + pad_bits
 
     return res
+
+def get_version_size(v):
+    """
+    Returns size of QR (w,h)
+    """
+    s = (4*v) + 17
+    return (s,s) 
+

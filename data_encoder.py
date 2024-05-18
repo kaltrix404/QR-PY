@@ -1,5 +1,6 @@
 import utils 
 from reedsolo import RSCodec
+import constants
 
 
 
@@ -11,116 +12,6 @@ def log(tup,p=None):
         print(tup[0],":",tup[1])
 
     
-
-ECC_L = 1
-ECC_M = 0
-ECC_Q = 3
-ECC_H = 2
-
-DEFAULT_ECL = ECC_L
-
-
-NUM_MODE = 1
-ALNUM_MODE = 2
-BYTE_MODE = 4
-
-
-
-MODE_INDICATORS={
-    NUM_MODE : "0001",
-    ALNUM_MODE : "0010" ,
-    BYTE_MODE : "0100"
-}
-
-ALPHANUMS = {"0":0,"1":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,
-    "A":10,"B":11,"C":12,"D":13,"E":14,"F":15,"G":16,"H":17,"I":18,"J":19,"K":20,"L":21,
-    "M":22,"N":23,"O":24,"P":25,"Q":26,"R":27,"S":28,"T":29,"U":30,"V":31,"W":32,"X":33,"Y":34,
-    "Z":35," ":36, "$":37,"%":38,"*":39,"+":40,"-":41,".":42,"/":43,":":44}
-
-
-#CWORD (codeword) = 8 bytes
-BYTE_CWORD_CAP ={
-    ECC_L: [0,
-        19, 34, 55, 80, 108, 136, 156, 194, 232, 274,
-        324, 370, 428, 461, 523, 589, 647, 721, 795, 861,
-        932, 1006, 1094, 1174, 1276, 1370, 1468, 1531, 1631, 1735,
-        1843, 1955, 2071, 2191, 2306, 2434, 2566, 2702, 2812, 2956
-    ],
-    ECC_M: [0,
-        16, 28, 44, 64, 86, 108, 124, 154, 182, 216,
-        254, 290, 334, 365, 415, 453, 507, 563, 627, 669,
-        714, 782, 860, 914, 1000, 1062, 1128, 1193, 1267, 1373,
-        1455, 1541, 1631, 1725, 1812, 1914, 1992, 2102, 2216, 2334
-    ],
-    ECC_Q: [0,
-        13, 22, 34, 48, 62, 76, 88, 110, 132, 154,
-        180, 206, 244, 261, 295, 325, 367, 397, 445, 485,
-        512, 568, 614, 664, 718, 754, 808, 871, 911, 985,
-        1033, 1115, 1171, 1231, 1286, 1354, 1426, 1502, 1582, 1666
-    ],
-    ECC_H: [0,
-        9, 16, 26, 36, 46, 60, 66, 86, 100, 122,
-        140, 158, 180, 197, 223, 253, 283, 313, 341, 385,
-        406, 442, 464, 514, 538, 596, 628, 661, 701, 745,
-        793, 845, 901, 961, 986, 1054, 1096, 1142, 1222, 1276
-    ]
-}
-
-
-ALNUM_CWORD_CAP = {
-    ECC_L: [0,
-        19, 34, 55, 80, 108, 136, 156, 194, 232, 274,
-        324, 370, 428, 461, 523, 589, 647, 721, 795, 861,
-        932, 1006, 1094, 1174, 1276, 1370, 1468, 1531, 1631, 1735,
-        1843, 1955, 2071, 2191, 2306, 2434, 2566, 2702, 2812, 2956
-    ],
-    ECC_M: [0,
-        16, 28, 44, 64, 86, 108, 124, 154, 182, 216,
-        254, 290, 334, 365, 415, 453, 507, 563, 627, 669,
-        714, 782, 860, 914, 1000, 1062, 1128, 1193, 1267, 1373,
-        1455, 1541, 1631, 1725, 1812, 1914, 1992, 2102, 2216, 2334
-    ],
-    ECC_Q: [0,
-        13, 22, 34, 48, 62, 76, 88, 110, 132, 154,
-        180, 206, 244, 261, 295, 325, 367, 397, 445, 485,
-        512, 568, 614, 664, 718, 754, 808, 871, 911, 985,
-        1033, 1115, 1171, 1231, 1286, 1354, 1426, 1502, 1582, 1666
-    ],
-    ECC_H: [0,
-        9, 16, 26, 36, 46, 60, 66, 86, 100, 122,
-        140, 158, 180, 197, 223, 253, 283, 313, 341, 385,
-        406, 442, 464, 514, 538, 596, 628, 661, 701, 745,
-        793, 845, 901, 961, 986, 1054, 1096, 1142, 1222, 1276
-    ]
-}
-
-
-NUM_CWORD_CAP = {
-    ECC_L: [0,
-        19, 34, 55, 80, 108, 136, 156, 194, 232, 274,
-        324, 370, 428, 461, 523, 589, 647, 721, 795, 861,
-        932, 1006, 1094, 1174, 1276, 1370, 1468, 1531, 1631, 1735,
-        1843, 1955, 2071, 2191, 2306, 2434, 2566, 2702, 2812, 2956
-    ],
-    ECC_M: [0,
-        16, 28, 44, 64, 86, 108, 124, 154, 182, 216,
-        254, 290, 334, 365, 415, 453, 507, 563, 627, 669,
-        714, 782, 860, 914, 1000, 1062, 1128, 1193, 1267, 1373,
-        1455, 1541, 1631, 1725, 1812, 1914, 1992, 2102, 2216, 2334
-    ],
-    ECC_Q: [0,
-        13, 22, 34, 48, 62, 76, 88, 110, 132, 154,
-        180, 206, 244, 261, 295, 325, 367, 397, 445, 485,
-        512, 568, 614, 664, 718, 754, 808, 871, 911, 985,
-        1033, 1115, 1171, 1231, 1286, 1354, 1426, 1502, 1582, 1666
-    ],
-    ECC_H: [0,
-        9, 16, 26, 36, 46, 60, 66, 86, 100, 122,
-        140, 158, 180, 197, 223, 253, 283, 313, 341, 385,
-        406, 442, 464, 514, 538, 596, 628, 661, 701, 745,
-        793, 845, 901, 961, 986, 1054, 1096, 1142, 1222, 1276
-    ]
-}
 
 
 def undefined_mode(mode,*args):
@@ -136,21 +27,21 @@ def char_count_bits(mode,version):
     Determine the number of bits required to encode len of characters for repective mode and versions. 
     """
     # numerical
-    if mode == NUM_MODE:
+    if mode == constants.NUM_MODE:
         if ( 1 <= version <= 9  ) : return 10
         elif (10 <= version <=  26) : return 12
         elif (27 <= version <= 40 ) : return 14
         else : print("Version error : %s"%version)
 
     # alnum
-    elif mode == ALNUM_MODE:
+    elif mode == constants.ALconstants.NUM_MODE:
         if ( 1 <= version <= 9  ) : return 9
         elif (10 <= version <=  26) : return 11
         elif (27 <= version <= 40 ) : return 13
         else : print("Version error : %s"%version)
 
     #byte
-    elif mode == BYTE_MODE :
+    elif mode == constants.BYTE_MODE :
         if ( 1 <= version <= 9  ) : return 8
         elif (10 <= version <=  26) : return 16
         elif (27 <= version <= 40 ) : return 16
@@ -169,17 +60,17 @@ class DataEncoder:
         self.mode = mode
         self.data = None
         self.version =version
-        self.ecl = DEFAULT_ECL if ecl == None else ecl
+        self.ecl = constants.DEFAULT_ECL if ecl == None else ecl
 
 
     def segment_data(self,data,mode,chars_len):
-        print("mmmmm",mode==ALNUM_MODE,chars_len)
+        print("mmmmm",mode==constants.ALNUM_MODE,chars_len)
         seg_data = ""
 
-        if mode == NUM_MODE: 
+        if mode == constants.NUM_MODE: 
             # group 3 digits as a single value ans encode it 
             for i in range(0,chars_len-2,3):
-                value = data[i:i+3]
+                value = int(data[i:i+3])
                 seg_data += utils.format2(value,"b",10)
 
             # exception when data doesnt get perfectly paired up in groups of three
@@ -188,24 +79,24 @@ class DataEncoder:
                 #7 bits long if 2 digits remaining 
                 # else 4 bits long if 1 digit remainig
                 f = lambda x: (3*x)+1  
-                seg_data += utils.format2(data[-rem:],"b",f(rem))
+                seg_data += utils.format2(int(data[-rem:]),"b",f(rem))
             
 
-        elif mode == ALNUM_MODE:
+        elif mode == constants.ALconstants.NUM_MODE:
             print("here")
             #segment and encode the data :
             #Two chars are coded in an 11-bit value by this formula: Value = 45 × C1 + C2
             #This has the exception that the last character in an alphanumeric string with an odd length is read as a 6-bit value instead.
             for i in range(0,chars_len-1,2): # self-note: (-1) for a reason #
                 #pair and encode 
-                C1,C2 = ALPHANUMS[data[i]], ALPHANUMS[data[i+1]]
+                C1,C2 = constants.ALPHANUMS[data[i]], constants.ALPHANUMS[data[i+1]]
                 value = (45 * C1) + C2
                 seg_data += utils.format2(value,"b",11)
             # odd length exception
             if chars_len % 2 :
-                seg_data += utils.format2(ALPHANUMS[data[-1]],"b",6)
+                seg_data += utils.format2(constants.ALPHANUMS[data[-1]],"b",6)
 
-        elif mode == BYTE_MODE:
+        elif mode == constants.BYTE_MODE:
             #represent every character by a 8 bit binary string
             for char in data:
                 seg_data += utils.format2(bin(ord(char)),"b",8)
@@ -223,12 +114,12 @@ class DataEncoder:
         total_bits = len(seg_data) #current len of seg_data
 
         #required len of seg_data
-        if mode == NUM_MODE:
-            total_bits_req = NUM_CWORD_CAP[ecl][version]*8
-        elif mode == ALNUM_MODE:
-            total_bits_req = ALNUM_CWORD_CAP[ecl][version]*8
-        elif mode == BYTE_MODE:
-            total_bits_req = BYTE_CWORD_CAP[ecl][version]*8
+        if mode == constants.NUM_MODE:
+            total_bits_req = constants.NUM_CWORD_CAP[ecl][version]*8
+        elif mode == constants.ALconstants.NUM_MODE:
+            total_bits_req = constants.ALconstants.NUM_CWORD_CAP[ecl][version]*8
+        elif mode == constants.BYTE_MODE:
+            total_bits_req = constants.BYTE_CWORD_CAP[ecl][version]*8
         else:
             undefined_mode(mode,"From pad_seg_data")
 
@@ -258,7 +149,10 @@ class DataEncoder:
         return seg_data
 
 
-
+    def divide_into_blocks(self,data,ecl,mode):
+        v_index  = self.version
+        blk_specs = constants.BLOCKS[mode][v_index]
+        print(blk_specs)
 
     def calculate_ecc(self,enc_data):
         """
@@ -314,13 +208,15 @@ class DataEncoder:
         log((f"Seg data ({len(seg_data)})",seg_data),p=1)
 
         # add mode and char count info
-        mode_indicator = MODE_INDICATORS[self.mode] 
+        mode_indicator = constants.MODE_INDICATORS[self.mode] 
         no_of_chars    = utils.format2(chars_len,"b",char_count_bits(self.mode,self.version))
         seg_data =  mode_indicator + no_of_chars + seg_data
 
         #add terminator + pad the data if necessary
         padded_data = self.pad_seg_data(self.mode,self.version,self.ecl,seg_data)
         log((f"Pad data ({len(padded_data)})",padded_data),p=1)
+
+        self.divide_into_blocks(padded_data,self.ecl,self.mode)
 
         # add the ecc
         eccd_data = self.calculate_ecc(padded_data)
@@ -346,26 +242,26 @@ class DataEncoder:
         def choose_mode(inp_str):
             # data only contains nums
             if inp_str.isnumeric():
-                return NUM_MODE
+                return constants.NUM_MODE
             
-            # if data not in alphanums set resort to byte mode()
+            # if data not in constants.alphanums set resort to byte mode()
             for i in inp_str:
-                if i not in ALPHANUMS.keys():
-                    return BYTE_MODE
-            return ALNUM_MODE
+                if i not in constants.ALPHANUMS.keys():
+                    return constants.BYTE_MODE
+            return constants.ALconstants.NUM_MODE
 
         # left to figure out on what basis to choose ecl #TODO
         def chooose_ecl():
-            return ECC_L
+            return constants.ECC_L
 
         def choose_version(mode,data_len,ecl):
             #get the req. capabilities table dat for specified ecl.
-            if mode == NUM_MODE :
-                cap = NUM_CWORD_CAP[ecl]
-            elif mode == ALNUM_MODE: 
-                cap = ALNUM_CWORD_CAP[ecl]
-            elif mode == BYTE_MODE:
-                cap = BYTE_CWORD_CAP[ecl]
+            if mode == constants.NUM_MODE :
+                cap = constants.NUM_CWORD_CAP[ecl]
+            elif mode == constants.ALconstants.NUM_MODE: 
+                cap = constants.ALconstants.NUM_CWORD_CAP[ecl]
+            elif mode == constants.BYTE_MODE:
+                cap = constants.BYTE_CWORD_CAP[ecl]
             else:
                 print("UNKNOWN MODE : %s"%str(mode))
                 exit()
@@ -380,6 +276,7 @@ class DataEncoder:
             print("too much data %s"%data_len)
             exit()       
 
+        #if data cant be fit into the mode 
 
         #analyze input data 
         if mode == None:
@@ -467,7 +364,7 @@ if __name__ == "__main__":
     de = DataEncoder()
     # data = de.analyze_input_data("HELLO WORLD")
     # 
-    (_,data) = de.encode_data("ABLJFFA:JA:DOJN:ASGDL"+"A*")
+    (_,data) = de.encode_data("12345678902345767845634737467")
     print(data,len(data))
 
 
@@ -489,3 +386,41 @@ if __name__ == "__main__":
 # Byte mode err
 # data len err if more data then v2
 # 
+
+
+
+# ECC Level	Mask Pattern	Type Information Bits
+# L	0	111011111000100
+# L	1	111001011110011
+# L	2	111110110101010
+# L	3	111100010011101
+# L	4	110011000101111
+# L	5	110001100011000
+# L	6	110110001000001
+# L	7	110100101110110
+# M	0	101010000010010
+# M	1	101000100100101
+# M	2	101111001111100
+# M	3	101101101001011
+# M	4	100010111111001
+# M	5	100000011001110
+# M	6	100111110010111
+# M	7	100101010100000
+# Q	0	011010101011111
+# Q	1	011000001101000
+# Q	2	011111100110001
+# Q	3	011101000000110
+# Q	4	010010010110100
+# Q	5	010000110000011
+# Q	6	010111011011010
+# Q	7	010101111101101
+# H	0	001011010001001
+# H	1	001001110111110
+# H	2	001110011100111
+# H	3	001100111010000
+# H	4	000011101100010
+# H	5	000001001010101
+# H	6	000110100001100
+# H	7	000100000111011
+# About Version Information Strings
+
