@@ -2,7 +2,7 @@ import numpy as np
 from math import floor
 
 import utils
-from data_encoder import DataEncoder,make_format_ecc 
+from data_encoder import DataEncoder,make_format_ecc
 import constants 
 
 
@@ -86,7 +86,7 @@ ALIGNMENT_PATTERN =  [[1,1,1,1,1],
 class QR:
 
 
-    def __init__(self,version=None,ecl=None,mask=None):
+    def __init__(self,version=None,ecl=None,mask=None,mode=None):
         self.version = version
         self.mask = mask
         self.ecl = ecl
@@ -94,13 +94,11 @@ class QR:
         self.mode = None
         self.size = None #get_version_size(version) if version else None
         self.qr = None
-
-
-
+        self.inp_data = None
 
 
     ##################################
-    # TODO make align pattern for every version  
+    #- TODO make align pattern for every version  
     def create_template(self):
             """
             Creates a template of the required size of the qr code.
@@ -183,7 +181,7 @@ class QR:
         self.qr[6,8:-8] = timing_arr #Horizontal
 
 
-    #TODO dynamically place alignment patterns
+    #-TODO dynamically place alignment patterns
     def place_alignments(self,qr,pattern):
         """
         Place specified alignment patterns in the QR code / Template .
@@ -306,7 +304,7 @@ class QR:
 
                     #go up and right (diagonal) ↗
                     r,c=go_upright(r,c)
-                    print("uppppp",r,c)
+                    # print("uppppp",r,c)
 
                 
                 else :# go down
@@ -324,9 +322,9 @@ class QR:
                     #go down and right (↘)
                     r,c=go_downright(r,c)
 
-                    print("downnnnnn",r,c)
+                    # print("downnnnnn",r,c)
 
-            print(r,c)
+            # print(r,c)
             #transverse to the next column as well as place data ( ← ← )
             for _ in range(2):
                 if check(r,c):
@@ -349,26 +347,29 @@ class QR:
         encoder = DataEncoder(mode=self.mode,version=self.version,ecl=self.ecl)
         (enc_data_params,enc_data)  = encoder.encode_data(inp_data)
 
+
         #update attributes
+        self.inp_data = inp_data
         self.version = enc_data_params['version']
         self.mode = enc_data_params['mode']
         self.ecl = enc_data_params['ecl']
-        self.data = enc_data+"0"*1000000
         self.size = utils.get_version_size(self.version)
         (self.w,self.h) = self.size
 
-        print("QR ATTRIBUTES",self.__getattribute__("version"))
+
+        # format encoded data from bytearray to bitstring
+
+        self.data = "".join([utils.format2(i,"b",8) for i in enc_data])
+        self.data = self.data +"0"*8 #NOTE : there are remainder bits specified in the standard ranging form (0-7)
+
+        
+        
+        self.mask = 1 #for now
+
         #create template and initialize an empty qr 
         self.template = self.create_template()
         self.qr = np.zeros(self.size)
-        
 
-        # data = "0010000001011011000010110111100011010001011100101101110001001101010000110100000011101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111110000011000010111010000100110000001001101100101101001010000011000100110000110"
-        # data = "0010000001011001110111011000010001100000101111000101100111111011100110100100000011101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000100000101110111010100001110111111011100101111101000001101110011101011100001010011"
-        self.data=self.data+"0"*7 # #TODO locate & figure out problem causing less data 
-
-        
-        self.mask = 1 #for now
         # create the QR
         self.place_data()
         self.place_mask()
@@ -393,19 +394,56 @@ class QR:
         import matplotlib.pyplot as plt
         from matplotlib.colors import ListedColormap
         
-        # plt.title("Version:%i"%self.version)
+        fig,ax = plt.subplots(1,1)
 
         my_cmap = ListedColormap(["white","black"],"mcmap")
         # my_cmap = ListedColormap(["black","white"],"mcmap")
-        plt.matshow(qrm,cmap=my_cmap)
+
+        ax.matshow(qrm,cmap=my_cmap)
+        ax.set_title(f"QR CODE v{self.version}, ECL: {self.ecl}, MODE: {self.mode}")
+
         # plt.matshow(qrm)
         plt.show()
 
 
-    def _adv_show(self):
+    def _adv_show(self,data=None,force=False,version=None,mode=None,ecl=None):
         levels=[0,1]
-        temp = self.template
-        qrm = self.qr
+        # temp = self.template
+        # qrm = self.qr
+
+
+        #update attributes
+        self.version = version
+        self.mode =mode
+        self.ecl = ecl
+        self.data = data
+
+        print('version:',self.version)
+        print('mode:',self.mode)
+        print('ecl:',self.ecl )
+
+
+        # self.mode=constants.NUM_MODE
+        self.size = utils.get_version_size(self.version)
+        (self.w,self.h) = self.size
+
+        print("QR ATTRIBUTES",self.__getattribute__("version"))
+        #create template and initialize an empty qr 
+        self.template = self.create_template()
+        self.qr = np.zeros(self.size)
+
+        
+        self.mask = 1 #for now
+        # create the QR
+        self.place_data()
+        self.place_mask()
+        self.place_finders()
+        self.place_timings()
+        self.qr = self.place_alignments(self.qr,ALIGNMENT_PATTERN)
+        self.place_version_info(self.version)
+        self.place_format_info()
+
+
 
         import matplotlib.pyplot as plt
         from matplotlib.colors import ListedColormap
@@ -417,11 +455,11 @@ class QR:
 
         my_cmap = ListedColormap(["white","black"],"mcmap")
   
-        axis[0].matshow(temp)
+        axis[0].matshow(self.template)
         axis[0].set_title("Template") 
         
         # For Cosine Function 
-        axis[1].matshow(qrm,cmap=my_cmap) 
+        axis[1].matshow(self.qr,cmap=my_cmap) 
         axis[1].set_title("QR CODE v%i"%self.version) 
 
         plt.show()
@@ -441,19 +479,21 @@ if __name__ == "__main__":
         
     my_qr = QR()
 
-    qrm = my_qr.create_qr("".join(["0123456789" for i in range(5)]))
-
+    # qrm = my_qr.create_qr("ABCDEFGHIJKLMNOPQRSTUVWXYZ; "*20)
+    # qrm = my_qr.create_qr("1234567890"*200)
+    qrm = my_qr.create_qr("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
                         
     print(qrm)
 
     # my_qr._adv_show()
     my_qr.show()
-    # print(my_qr)
+
 
 
 
 
     ################
+    # NOTE: Workings and Implementation
     # How i want to implement usage:
 
     # 1
@@ -477,24 +517,14 @@ if __name__ == "__main__":
 
 
     #NOTES / INFO
+    #- TODO version to size, v/
+    #- TODO total cwords,ecc syms
+    #- TODO alignment  pattern  
+    # TODO mask rating and choosing 
+    #- TODO version info module placement for version>7
 
+ 
 
-
-
-    #TODO
-    # version to size, v/
-    # total cwords,ecc syms
-    # alignment  pattern
-    #mask rating and choosing
-    # version info module placement for version>7
-
-
-
-
-
-
-
-    #############
 
 
 

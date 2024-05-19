@@ -28,3 +28,19 @@ def get_version_size(v):
     s = (4*v) + 17
     return (s,s) 
 
+def bin2x(bin,res_type="x"):
+    #NOTE remainder bits that dont fit into a byte are discarded 
+    res = []
+    if res_type == "x":
+        res = [hex(int(bin[i:i+8],2)) for i in range(0,len(bin),8)]    
+    elif res_type == "i":
+        res = [int(bin[i:i+8],2) for i in range(0,len(bin),8)]
+    else:
+        raise NotImplementedError
+
+
+    return res
+
+
+if __name__ == "__main__":
+    print(bin2x("00000000111111111111","i"))
