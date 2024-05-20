@@ -345,7 +345,7 @@ class DataEncoder:
         log((f"Seg data ({len(seg_data)})",seg_data),print_only=1)
         print()
 
-
+ 
         # add mode and char count info
         mode_indicator = MODE_INDICATORS[self.mode] 
         no_of_chars    = utils.format2(chars_len,"b",char_count_bits(self.mode,self.version))

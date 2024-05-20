@@ -1,6 +1,4 @@
 
-
-
 #Error Correctin levels
 ECC_L = 1
 ECC_M = 0
