@@ -220,15 +220,10 @@ class QR:
         ]  # reverse FTM until changing constant
         vstring = [version_string[i : i + 3] for i in range(0, len(version_string), 3)]
 
-        # print(vstring)
         vstring = np.array(vstring)
-        # print(vstring)
-        # print(vstring.shape)
-        #
+
         self.qr[:6, -11:-8] = vstring  # top right
         self.qr[-11:-8, :6] = vstring.T  # bottom left
-
-        # print(vstring.T)
 
         # return qr
 
