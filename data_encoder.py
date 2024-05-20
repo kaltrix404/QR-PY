@@ -376,7 +376,6 @@ class DataEncoder:
 
 
         # no segmentation currently
-        #TODO one an specify their own func to analyze data than this default one
         #TODO notify user if given params are incompatible
     def analyze_input_data(self,inp,ecl=None,mode=None,version=None):
         """
@@ -400,12 +399,13 @@ class DataEncoder:
             
             return ALNUM_MODE
 
-        # left to figure out on what basis to choose ecl #TODO
+
         def chooose_ecl():
-            return ECC_L
+            return DEFAULT_ECL
 
         def choose_version(mode,data_len,ecl):
             #get the req. capabilities table dat for specified ecl.
+            #TODO replace by BLOCKS constant
             if mode == NUM_MODE :
                 cap = NUM_CWORD_CAP[ecl]
             elif mode == ALNUM_MODE: 
@@ -419,14 +419,14 @@ class DataEncoder:
             #return the version which has len just greater than data_len
             for ver in range(len(cap)): # 40 versions
                 chars = cap[ver]
-                if chars > data_len:
+                if chars > data_len + 2: 
                     return ver
+
 
             #data len greater than max
             print("too much data %s"%data_len)
             exit()       
-
-        #TODO if data cant be fit into the mode 
+ 
 
         log(f"Analyzing input : {inp}",print_only=TEMP_P)
         #analyze input data 
@@ -448,21 +448,13 @@ class DataEncoder:
 
 
 
-from main import QR
+
 
 if __name__ == "__main__":
+    pass
 
-    #tests
-    v = 5
-    de = DataEncoder()#version=v)
-    # data = de.analyze_input_data("HELLO WORLD")
-    # 
-    (_,data) = de.encode_data("ABCDEFGHIJKLMNOPQRSTUVWXZ; "*4)
-    data = "".join([utils.format2(i,"b",8) for i in data]) +  "0"*8
 
-    print("DONE ENCODING DATA .NOW PLACING DATA")
 
-    myqr=QR()._adv_show(data,version=_['version'],ecl=_['ecl'],mode=_['mode'],force=1)
 
 
 
