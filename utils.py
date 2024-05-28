@@ -1,6 +1,12 @@
 import numpy as np
 
 
+# def rate_masks(masks):
+#     for masks in masks:
+
+
+
+
 def alternating_arr(n, start=1):
     """
     Create array of alternating 1s and 0s

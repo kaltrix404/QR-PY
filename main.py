@@ -133,9 +133,9 @@ class QR:
             # Generate combinations of positions
             positions = list(product(ALIGNMENT_PATTERN_POS[self.version], repeat=2))
 
-            for r, c in positions:
+            for r,c in positions:
                 # avoid finder patterns
-                if (r, c) == (6, 6):
+                if (r,c) == (6,6):
                     continue
                 if r > (self.w - 8) and c == 6:
                     continue
@@ -391,7 +391,7 @@ class QR:
 
 if __name__ == "__main__":
 
-    my_qr = QR(mask=1,ecl=ECC_L)#-FIXME ecc m not working
+    my_qr = QR(mask=1,ecl=ECC_M)
 
     qrm = my_qr.create_qr("HELLO WORLD")
     # qrm = my_qr.create_qr("ABCDEFGHIJKLMNOPQRSTUVWXYZ; "*20)
